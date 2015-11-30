@@ -1,0 +1,65 @@
+---
+title: "财新（汇丰）中国制造业采购经理指数（China Manufacturing Purchasing Managers’ Index）"
+author: "Libo.Jin"
+date: "2015年11月30日"
+output: html_document
+---
+
+### 1.因子分析  
+> 本文是财新中国制造业PMI指数对沪深300与中证500指数以及相对应的股指期货择时能力的回测研究。 
+>
+>>财新中国制造业PMI指数是衡量制造业在生产、新订单、商品价格、存货、雇员、订单交货、新出口订单和进口等八个方面状况的指数。该指数报告的编制基于每月向逾400家制造业厂商的采购主管发出问卷然后回收的数据。调查样本库采用分层抽样法，按地理分布，并根据区域及行业对中国工业生产的影响，采用标准行业分类法予以分层抽样。根据每月中旬收集的数据，调查的结果可反映当月对比上月的变化。PMI指数50为荣枯分水线，当PMI大于50时，说明经济在发展，当PMI小于50时，说明经济在衰退。
+>
+>本文的研究主要是测试6个月，12个月的Score值对市场指数是否有预测作用。即如果Score值为正对下期指数看涨，Score值为负对下期指数看跌。
+
+###2.因子构成
+>1.PMI 原始数据统计
+>```{r, echo = FALSE, message = FALSE, warning = FALSE}
+library(RSQLServer)
+library(dplyr)
+library(lubridate)
+library(ggplot2)  
+library(reshape2)
+
+channel <- src_sqlserver(server="SQL", database="Libo", user="libo.jin", password="123456")
+
+factor_data <- tbl(channel, "signal") %>%
+  filter(Name == "pmi") %>%
+  collect %>% 
+  mutate(TradingDay = as.Date(TradingDay))
+  
+facotr_name <- factor_data$Name[1]
+```
+```{r, echo = FALSE}
+lab <- paste0("Max: ", max(factor_data$Value),"\nMin: ", min(factor_data$Value), "\nMean: ",
+              round(mean(factor_data$Value), digits = 1))
+
+ggplot(factor_data, aes(x = TradingDay) ) + geom_line(aes(y = Value), color = "red") + 
+  geom_point(aes(y = Value), color = "red") + 
+  geom_text(aes(x, y, label = lab), data = data.frame(x = max(factor_data$TradingDay), y = max(factor_data$Value)), hjust = 1, vjust = 1, size = 5) +
+  geom_line(aes(y = mean(Value))) + xlab(NULL) + ylab(NULL)
+```
+
+
+
+> $$ Score_{t} = \frac{PMI_{t}-mean(PMI_{t-n+1}:PMI_{t})}{sd(PMI_{t-n+1}:PMI_{t})}$$
+> 其中t表示当期，n表示Score期数
+
+
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+> ## This is a header.
+> 
+> 1.  This is the first list item.
+> 2.  This is the second list item.
+> 
+> Here's some example code:
+> 
+> 
